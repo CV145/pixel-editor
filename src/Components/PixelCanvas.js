@@ -1,48 +1,39 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 
 const PixelCanvas = () => {
   const [canvas, setCanvas] = useState(createInitialCanvas());
-  const [selectedColor, setSelectedColor] = useState('black'); // Default color
+  const [selectedColor, setSelectedColor] = useState('#000000');
+  const [isDrawing, setIsDrawing] = useState(false);
 
-  // Function to create an initial canvas state
   function createInitialCanvas() {
-    // Initialize a 10x10 canvas
     return Array(10).fill().map(() => Array(10).fill('white'));
   }
 
-  // Function to handle pixel click
   const handlePixelClick = (rowIndex, colIndex) => {
-    // Create a copy of the current canvas state
     const newCanvas = canvas.map(row => [...row]);
-
-    // Update the color of the clicked pixel
     newCanvas[rowIndex][colIndex] = selectedColor;
-
-    // Update the canvas state
     setCanvas(newCanvas);
   };
 
-
-  const handleColorChange = (event) => {
-    setSelectedColor(event.target.value);
+  const startDrawing = (rowIndex, colIndex) => {
+    setIsDrawing(true);
+    handlePixelClick(rowIndex, colIndex);
   };
 
-  const handleSave = async () => {
-    try {
-      const response = await axios.post('http://localhost:3001/save', { canvas });
-      console.log('Save response:', response.data);
-    } catch (error) {
-      console.error('Error saving canvas:', error);
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const draw = (rowIndex, colIndex) => {
+    if (isDrawing) {
+      handlePixelClick(rowIndex, colIndex);
     }
   };
 
   return (
     <div>
-      <input type="color" value={selectedColor} onChange={handleColorChange} />
-      <button onClick={handleSave}>Save</button>
-
-      <div style={{ marginTop: '10px' }}>
+      <input type="color" value={selectedColor} onChange={e => setSelectedColor(e.target.value)} />
+      <div style={{ marginTop: '10px' }} onMouseUp={stopDrawing}>
         {canvas.map((row, rowIndex) => (
           <div key={rowIndex} style={{ display: 'flex' }}>
             {row.map((color, colIndex) => (
@@ -54,7 +45,8 @@ const PixelCanvas = () => {
                   backgroundColor: color,
                   border: '1px solid black'
                 }}
-                onClick={() => handlePixelClick(rowIndex, colIndex)}
+                onMouseDown={() => startDrawing(rowIndex, colIndex)}
+                onMouseEnter={() => draw(rowIndex, colIndex)}
               />
             ))}
           </div>
